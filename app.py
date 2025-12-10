@@ -27,20 +27,9 @@ from rig_efficiency_backend import (
 
 # ==================== IMPORT ENHANCED AI CHATBOT ====================
 # Import the advanced AI chatbot with NLP, sentiment analysis, and context tracking
-import sys
-import importlib.util
-
-# Load the enhanced chatbot module (handles filename with space)
-_chatbot_spec = importlib.util.spec_from_file_location(
-    "rig_chatbot_enhanced",
-    r"c:\Office work\Upstream SCRAP news\Tools\rig tool files\rig chatbot.py"
-)
-_chatbot_module = importlib.util.module_from_spec(_chatbot_spec)
-sys.modules["rig_chatbot_enhanced"] = _chatbot_module
-_chatbot_spec.loader.exec_module(_chatbot_module)
-
-# Import the enhanced chatbot class
-RigEfficiencyAIChatbot = _chatbot_module.RigEfficiencyAIChatbot
+# ==================== IMPORT ENHANCED AI CHATBOT ====================
+# Import the enhanced AI chatbot
+from rig_chatbot import RigEfficiencyAIChatbot
 
 # Page configuration
 st.set_page_config(
@@ -5430,4 +5419,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
