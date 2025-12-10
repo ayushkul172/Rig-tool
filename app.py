@@ -12,6 +12,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, timedelta
 import io
+import os
 import streamlit.components.v1 as components
 from rig_efficiency_backend import (
     RigEfficiencyCalculator, 
@@ -3061,69 +3062,88 @@ def main():
     
     # Enhanced Sidebar
     with st.sidebar:
-        st.markdown("### 📁 DATA MANAGEMENT")
+        # ------------------ Replace the existing sidebar uploader / data-management block with this snippet ------------------
         
-        uploaded_file = st.file_uploader(
-            "Upload Rig Data",
-            type=['xlsx', 'xls', 'csv'],
-            help="📊 Supported formats: Excel (.xlsx, .xls) or CSV (.csv)\n\n"
-                 "📋 Required columns:\n"
-                 "• Drilling Unit Name / Rig Name\n"
-                 "• Contract Start Date\n"
-                 "• Contract End Date\n"
-                 "• Dayrate ($k)\n"
-                 "• Current Location\n"
-                 "• Contract Length\n"
-                 "• Status"
+        st.header("📊 Data Management")
+
+        # Data source selector (Demo contract, Demo operational, or upload)
+        data_source = st.radio(
+            "Select Data Source:",
+            ["📊 Demo: Contract Data", "📊 Demo: Operational Data", "📁 Upload Your Own"],
+            horizontal=True
         )
-        
-        if uploaded_file is not None:
-            try:
-                # Show animated progress bar instead of spinner
-                progress_placeholder = st.empty()
-                
-                with progress_placeholder.container():
-                    st.markdown("<h4 style='color: #4FC3F7; margin-bottom: 1rem;'>📂 PROCESSING YOUR DATA</h4>", unsafe_allow_html=True)
-                    show_animated_progress([
-                        ("Reading File", 0.2),
-                        ("Validating Data", 0.4),
-                        ("Processing Columns", 0.6),
-                        ("Calculating Metrics", 0.8),
-                        ("Finalizing", 1.0)
-                    ])
-                
-                # Process the file with caching
-                file_bytes = uploaded_file.read()
-                df = process_uploaded_file(file_bytes, uploaded_file.name)
-                st.session_state.df = df
-                
-                # Clear progress and show success
-                progress_placeholder.empty()
-                st.success(f"✅ Successfully loaded **{len(df):,}** records from **{uploaded_file.name}**!")
-                
-                # Enhanced data preview
-                with st.expander("📊 Data Preview", expanded=False):
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Total Records", f"{len(df):,}")
-                    with col2:
-                        st.metric("Unique Rigs", f"{df['Rig Name'].nunique():,}")
-                    with col3:
-                        if 'Current Location' in df.columns:
-                            st.metric("Locations", f"{df['Current Location'].nunique():,}")
-                    
-                    st.dataframe(
-                        df.head(10).style.set_properties(**{
-                            'background-color': '#1a1a1a',
-                            'color': '#ffffff',
-                            'border-color': '#D4AF37'
-                        }),
-                        use_container_width=True
-                    )
-            
-            except Exception as e:
-                st.error(f"❌ Error loading file: {str(e)}")
-                st.info("💡 Tip: Ensure your file has the required columns and proper data format.")
+
+        df = None
+
+        # Demo contract data
+        if data_source == "📊 Demo: Contract Data":
+            demo_file = "phantom_rig_contracts_data.xlsx"
+            if os.path.exists(demo_file):
+                try:
+                    df = pd.read_excel(demo_file)
+                    st.success(f"✅ Loaded Phantom Rig Contract Data: {len(df)} contracts")
+                    st.info("📋 Showing contract history, terms, and financial details")
+                    with st.expander("👀 Preview Contract Data", expanded=False):
+                        st.dataframe(df.head())
+                        if 'Contract value ($m)' in df.columns:
+                            st.caption(f"Total Contract Value: ${df['Contract value ($m)'].sum():.2f}M")
+                except Exception as e:
+                    st.error(f"❌ Error reading contract demo file: {e}")
+            else:
+                st.error(f"❌ Contract demo file not found: {demo_file}")
+
+        # Demo operational data
+        elif data_source == "📊 Demo: Operational Data":
+            demo_file = "phantom_rig_synthetic_data.xlsx"
+            if os.path.exists(demo_file):
+                try:
+                    df = pd.read_excel(demo_file)
+                    st.success(f"✅ Loaded Phantom Rig Operational Data: {len(df)} rows")
+                    st.info("📈 Showing daily drilling metrics, efficiency, and performance")
+                    with st.expander("👀 Preview Operational Data", expanded=False):
+                        st.dataframe(df.head())
+                        if 'Efficiency_%' in df.columns:
+                            st.caption(f"Average Efficiency: {df['Efficiency_%'].mean():.2f}%")
+                except Exception as e:
+                    st.error(f"❌ Error reading operational demo file: {e}")
+            else:
+                st.error(f"❌ Operational demo file not found: {demo_file}")
+
+        # Upload your own file (uses process_uploaded_file cached helper defined above)
+        else:
+            uploaded_file = st.file_uploader(
+                "Choose a file (Excel or CSV)",
+                type=['xlsx', 'xls', 'csv'],
+                help="Upload your rig data"
+            )
+
+            if uploaded_file is not None:
+                try:
+                    # Use the cached processor defined earlier in app.py (process_uploaded_file)
+                    file_bytes = uploaded_file.read()
+                    df = process_uploaded_file(file_bytes, uploaded_file.name)
+
+                    if df is None or df.empty:
+                        st.error("❌ Uploaded file processed but returned empty data.")
+                        st.stop()
+
+                    st.success(f"✅ Loaded your file: {len(df)} records")
+                    with st.expander("👀 Preview Uploaded Data", expanded=False):
+                        st.dataframe(df.head())
+                except Exception as e:
+                    st.error(f"❌ Error loading file: {str(e)}")
+                    st.stop()
+            else:
+                st.warning("⚠️ Please upload a file or select a demo dataset")
+                st.stop()
+
+        # Verify data loaded and store in session state for the rest of the app
+        if df is None or (isinstance(df, pd.DataFrame) and df.empty):
+            st.error("No data loaded!")
+            st.stop()
+        else:
+            st.session_state.df = df
+        # ------------------ End replacement block ------------------
         
         st.markdown("---")
         
