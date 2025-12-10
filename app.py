@@ -28,7 +28,6 @@ from rig_efficiency_backend import (
 # ==================== IMPORT ENHANCED AI CHATBOT ====================
 # Import the advanced AI chatbot with NLP, sentiment analysis, and context tracking
 # ==================== IMPORT ENHANCED AI CHATBOT ====================
-# Import the enhanced AI chatbot
 from rig_chatbot import RigEfficiencyAIChatbot
 
 # Page configuration
@@ -3063,67 +3062,120 @@ def main():
     with st.sidebar:
         st.markdown("### 📁 DATA MANAGEMENT")
         
-        uploaded_file = st.file_uploader(
-            "Upload Rig Data",
-            type=['xlsx', 'xls', 'csv'],
-            help="📊 Supported formats: Excel (.xlsx, .xls) or CSV (.csv)\n\n"
-                 "📋 Required columns:\n"
-                 "• Drilling Unit Name / Rig Name\n"
-                 "• Contract Start Date\n"
-                 "• Contract End Date\n"
-                 "• Dayrate ($k)\n"
-                 "• Current Location\n"
-                 "• Contract Length\n"
-                 "• Status"
+        # Data source selector
+        data_source = st.radio(
+            "Select Data Source:",
+            ["📊 Demo: Contract Data", "📊 Demo: Operational Data", "📁 Upload Your Own"],
+            horizontal=False
         )
         
-        if uploaded_file is not None:
-            try:
-                # Show animated progress bar instead of spinner
-                progress_placeholder = st.empty()
-                
-                with progress_placeholder.container():
-                    st.markdown("<h4 style='color: #4FC3F7; margin-bottom: 1rem;'>📂 PROCESSING YOUR DATA</h4>", unsafe_allow_html=True)
-                    show_animated_progress([
-                        ("Reading File", 0.2),
-                        ("Validating Data", 0.4),
-                        ("Processing Columns", 0.6),
-                        ("Calculating Metrics", 0.8),
-                        ("Finalizing", 1.0)
-                    ])
-                
-                # Process the file with caching
-                file_bytes = uploaded_file.read()
-                df = process_uploaded_file(file_bytes, uploaded_file.name)
-                st.session_state.df = df
-                
-                # Clear progress and show success
-                progress_placeholder.empty()
-                st.success(f"✅ Successfully loaded **{len(df):,}** records from **{uploaded_file.name}**!")
-                
-                # Enhanced data preview
-                with st.expander("📊 Data Preview", expanded=False):
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Total Records", f"{len(df):,}")
-                    with col2:
-                        st.metric("Unique Rigs", f"{df['Rig Name'].nunique():,}")
-                    with col3:
-                        if 'Current Location' in df.columns:
-                            st.metric("Locations", f"{df['Current Location'].nunique():,}")
-                    
-                    st.dataframe(
-                        df.head(10).style.set_properties(**{
-                            'background-color': '#1a1a1a',
-                            'color': '#ffffff',
-                            'border-color': '#D4AF37'
-                        }),
-                        use_container_width=True
-                    )
+        df = None
+        
+        if data_source == "📊 Demo: Contract Data":
+            # Load contract data
+            demo_file = "phantom_rig_contracts_data.xlsx"
             
-            except Exception as e:
-                st.error(f"❌ Error loading file: {str(e)}")
-                st.info("💡 Tip: Ensure your file has the required columns and proper data format.")
+            try:
+                df = pd.read_excel(demo_file)
+                st.success(f"✅ Loaded Phantom Rig Contract Data: {len(df)} contracts")
+                st.info("📋 Showing contract history, terms, and financial details")
+                
+                with st.expander("👀 Preview Contract Data", expanded=False):
+                    st.dataframe(df.head())
+                    st.caption(f"Total Contract Value: ${df['Contract value ($m)'].sum():.2f}M")
+                
+                # Store in session state
+                st.session_state.df = df
+                    
+            except FileNotFoundError:
+                st.error("❌ Contract data file not found.")
+                
+        elif data_source == "📊 Demo: Operational Data":
+            # Load operational data
+            demo_file = "phantom_rig_synthetic_data.xlsx"
+            
+            try:
+                df = pd.read_excel(demo_file)
+                st.success(f"✅ Loaded Phantom Rig Operational Data: {len(df)} days")
+                st.info("📈 Showing daily drilling metrics, efficiency, and performance")
+                
+                with st.expander("👀 Preview Operational Data", expanded=False):
+                    st.dataframe(df.head())
+                    st.caption(f"Average Efficiency: {df['Efficiency_%'].mean():.2f}%")
+                
+                # Store in session state
+                st.session_state.df = df
+                    
+            except FileNotFoundError:
+                st.error("❌ Operational data file not found.")
+                
+        else:  # Upload Your Own
+            uploaded_file = st.file_uploader(
+                "Choose a file (Excel or CSV)",
+                type=['xlsx', 'xls', 'csv'],
+                help="Upload your rig data"
+            )
+            
+            if uploaded_file:
+                try:
+                    # Show animated progress bar instead of spinner
+                    progress_placeholder = st.empty()
+                    
+                    with progress_placeholder.container():
+                        st.markdown("<h4 style='color: #4FC3F7; margin-bottom: 1rem;'>📂 PROCESSING YOUR DATA</h4>", unsafe_allow_html=True)
+                        show_animated_progress([
+                            ("Reading File", 0.2),
+                            ("Validating Data", 0.4),
+                            ("Processing Columns", 0.6),
+                            ("Calculating Metrics", 0.8),
+                            ("Finalizing", 1.0)
+                        ])
+                    
+                    # Process the file with caching
+                    if uploaded_file.name.endswith('.csv'):
+                        file_bytes = uploaded_file.read()
+                        df = pd.read_csv(io.BytesIO(file_bytes))
+                    else:
+                        file_bytes = uploaded_file.read()
+                        df = process_uploaded_file(file_bytes, uploaded_file.name)
+                    
+                    st.session_state.df = df
+                    
+                    # Clear progress and show success
+                    progress_placeholder.empty()
+                    st.success(f"✅ Successfully loaded **{len(df):,}** records from **{uploaded_file.name}**!")
+                    
+                    # Enhanced data preview
+                    with st.expander("📊 Data Preview", expanded=False):
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Total Records", f"{len(df):,}")
+                        with col2:
+                            st.metric("Unique Rigs", f"{df['Rig Name'].nunique():,}")
+                        with col3:
+                            if 'Current Location' in df.columns:
+                                st.metric("Locations", f"{df['Current Location'].nunique():,}")
+                        
+                        st.dataframe(
+                            df.head(10).style.set_properties(**{
+                                'background-color': '#1a1a1a',
+                                'color': '#ffffff',
+                                'border-color': '#D4AF37'
+                            }),
+                            use_container_width=True
+                        )
+                
+                except Exception as e:
+                    st.error(f"❌ Error loading file: {str(e)}")
+                    st.info("💡 Tip: Ensure your file has the required columns and proper data format.")
+            else:
+                st.warning("⚠️ Please upload a file")
+        
+        # Verify data loaded
+        if df is None or (isinstance(df, pd.DataFrame) and df.empty):
+            if data_source != "📁 Upload Your Own":
+                st.error("No data loaded!")
+                st.stop()
         
         st.markdown("---")
         
@@ -3205,15 +3257,19 @@ def main():
         with st.expander("🤖 AI Assistant - Click to Chat", expanded=False):
             st.markdown("*Ask me anything about rig efficiency*")
             
-            # Display chat history in compact format
+            # Display chat history with full responses
             if st.session_state.chat_messages:
-                # Show only last 3 messages to save space
-                recent_messages = st.session_state.chat_messages[-6:]
-                for message in recent_messages:
-                    if message['role'] == 'user':
-                        st.info(f"**You:** {message['content'][:100]}..." if len(message['content']) > 100 else f"**You:** {message['content']}")
-                    else:
-                        st.success(f"**AI:** {message['content'][:150]}..." if len(message['content']) > 150 else f"**AI:** {message['content']}")
+                # Create a scrollable container for chat history
+                chat_container = st.container()
+                with chat_container:
+                    # Show last 6 messages (3 exchanges)
+                    recent_messages = st.session_state.chat_messages[-6:]
+                    for message in recent_messages:
+                        if message['role'] == 'user':
+                            st.info(f"**You:** {message['content']}")
+                        else:
+                            # Display full AI response with markdown formatting
+                            st.success(f"**AI:** {message['content']}")
             else:
                 st.info("👋 Hello! Ask me anything!")
             
@@ -4081,13 +4137,7 @@ def main():
                         # Comparison table
                         st.markdown("### 📊 PERFORMANCE TABLE")
                         st.dataframe(
-                            comparison_df.style.background_gradient(
-                                subset=['Overall Score', 'Utilization', 'Dayrate', 'Stability',
-                                       'Location', 'Climate', 'Performance'],
-                                cmap='RdYlGn',
-                                vmin=0,
-                                vmax=100
-                            ).format({
+                            comparison_df.style.format({
                                 'Overall Score': '{:.1f}%',
                                 'Utilization': '{:.1f}%',
                                 'Dayrate': '{:.1f}%',
@@ -4725,10 +4775,7 @@ def main():
                             'P10': "{:.2f}",
                             'P50 (Median)': "{:.2f}",
                             'P90': "{:.2f}"
-                        }).background_gradient(
-                            subset=['P10', 'P50 (Median)', 'P90'],
-                            cmap='RdYlGn_r'
-                        ),
+                        }),
                         use_container_width=True,
                         hide_index=True
                     )
@@ -5126,10 +5173,7 @@ def main():
                     if finding_list:
                         findings_df = pd.DataFrame(finding_list)
                         st.dataframe(
-                            findings_df.style.background_gradient(
-                                subset=['Days Lost', 'Cost ($k)'],
-                                cmap='RdYlGn_r'
-                            ),
+                            findings_df,
                             use_container_width=True,
                             hide_index=True
                         )
@@ -5333,7 +5377,7 @@ def main():
                         display_cols = [col for col in display_cols if col in results.columns]
                         
                         display_df = results[display_cols].copy()
-                        display_df['Match_Score'] = display_df['Match_Score'].round(0).astype(int)
+                        display_df['Match_Score'] = display_df['Match_Score'].round(1)
                         display_df['Climate_Score'] = display_df['Climate_Score'].round(1)
                         
                         # Rename for better display
@@ -5345,11 +5389,17 @@ def main():
                             'Climate_Score': 'Climate (0-10)'
                         })
                         
+                        # Format columns with proper data types
+                        format_dict = {}
+                        if 'Match %' in display_df.columns:
+                            format_dict['Match %'] = '{:.1f}'
+                        if 'Climate (0-10)' in display_df.columns:
+                            format_dict['Climate (0-10)'] = '{:.1f}'
+                        if 'Dayrate ($k)' in display_df.columns:
+                            format_dict['Dayrate ($k)'] = '{:.1f}'
+                        
                         st.dataframe(
-                            display_df.style.background_gradient(
-                                subset=['Match %', 'Climate (0-10)'],
-                                cmap='RdYlGn'
-                            ),
+                            display_df.style.format(format_dict) if format_dict else display_df,
                             use_container_width=True,
                             hide_index=True,
                             height=400
@@ -5419,5 +5469,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()
