@@ -3077,12 +3077,18 @@ def main():
             
             try:
                 df = pd.read_excel(demo_file)
+                
+                # FIX: Map "Drilling Unit Name" to "Rig Name" if column exists
+                if "Drilling Unit Name" in df.columns and "Rig Name" not in df.columns:
+                    df["Rig Name"] = df["Drilling Unit Name"]
+                
                 st.success(f"✅ Loaded Phantom Rig Contract Data: {len(df)} contracts")
                 st.info("📋 Showing contract history, terms, and financial details")
                 
                 with st.expander("👀 Preview Contract Data", expanded=False):
                     st.dataframe(df.head())
-                    st.caption(f"Total Contract Value: ${df['Contract value ($m)'].sum():.2f}M")
+                    if 'Contract value ($m)' in df.columns:
+                        st.caption(f"Total Contract Value: ${df['Contract value ($m)'].sum():.2f}M")
                 
                 # Store in session state
                 st.session_state.df = df
@@ -3096,12 +3102,18 @@ def main():
             
             try:
                 df = pd.read_excel(demo_file)
+                
+                # FIX: Map "Drilling Unit Name" to "Rig Name" if column exists
+                if "Drilling Unit Name" in df.columns and "Rig Name" not in df.columns:
+                    df["Rig Name"] = df["Drilling Unit Name"]
+                
                 st.success(f"✅ Loaded Phantom Rig Operational Data: {len(df)} days")
                 st.info("📈 Showing daily drilling metrics, efficiency, and performance")
                 
                 with st.expander("👀 Preview Operational Data", expanded=False):
                     st.dataframe(df.head())
-                    st.caption(f"Average Efficiency: {df['Efficiency_%'].mean():.2f}%")
+                    if 'Efficiency_%' in df.columns:
+                        st.caption(f"Average Efficiency: {df['Efficiency_%'].mean():.2f}%")
                 
                 # Store in session state
                 st.session_state.df = df
