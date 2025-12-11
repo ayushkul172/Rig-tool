@@ -2442,12 +2442,38 @@ def create_enhanced_radar_chart(metrics, rig_name):
 def create_timeline_chart_enhanced(rig_data):
     """Create an enhanced timeline chart"""
     try:
-        valid_contracts = rig_data[
-            rig_data['Contract Start Date'].notna() & 
-            rig_data['Contract End Date'].notna()
+        # Create a deep copy to avoid modifying original data
+        rig_data_copy = rig_data.copy(deep=True)
+        
+        # Convert date columns to datetime with multiple fallback methods
+        for date_col in ['Contract Start Date', 'Contract End Date']:
+            if date_col in rig_data_copy.columns:
+                # Method 1: Try standard conversion
+                rig_data_copy[date_col] = pd.to_datetime(rig_data_copy[date_col], errors='coerce')
+                
+                # Method 2: For any remaining NaT values, try alternative formats
+                mask = rig_data_copy[date_col].isna()
+                if mask.any():
+                    # Try parsing with dayfirst=True for DD/MM/YYYY formats
+                    rig_data_copy.loc[mask, date_col] = pd.to_datetime(
+                        rig_data_copy.loc[mask, date_col], 
+                        dayfirst=True, 
+                        errors='coerce'
+                    )
+        
+        # Filter for valid contracts with both dates present
+        valid_contracts = rig_data_copy[
+            rig_data_copy['Contract Start Date'].notna() & 
+            rig_data_copy['Contract End Date'].notna()
         ].copy()
         
         if valid_contracts.empty:
+            return None
+        
+        # Additional validation: ensure dates are actually datetime objects
+        if not pd.api.types.is_datetime64_any_dtype(valid_contracts['Contract Start Date']):
+            return None
+        if not pd.api.types.is_datetime64_any_dtype(valid_contracts['Contract End Date']):
             return None
         
         fig = go.Figure()
@@ -2457,8 +2483,38 @@ def create_timeline_chart_enhanced(rig_data):
         for idx, row in valid_contracts.iterrows():
             color_idx = idx % len(colors)
             
+            # Extract datetime objects
+            start_date = row['Contract Start Date']
+            end_date = row['Contract End Date']
+            
+            # Validate that we have actual datetime objects
+            if not isinstance(start_date, (pd.Timestamp, datetime)):
+                continue
+            if not isinstance(end_date, (pd.Timestamp, datetime)):
+                continue
+            
+            # Calculate duration
+            try:
+                duration = (end_date - start_date).days
+            except:
+                duration = 0
+            
+            # Format dates for display
+            try:
+                start_str = start_date.strftime('%Y-%m-%d')
+                end_str = end_date.strftime('%Y-%m-%d')
+            except:
+                # Fallback to string representation
+                start_str = str(start_date)[:10]
+                end_str = str(end_date)[:10]
+            
+            # Get dayrate safely
+            dayrate = row.get('Dayrate ($k)', 0)
+            if pd.isna(dayrate):
+                dayrate = 0
+            
             fig.add_trace(go.Scatter(
-                x=[row['Contract Start Date'], row['Contract End Date']],
+                x=[start_date, end_date],
                 y=[idx, idx],
                 mode='lines+markers',
                 name=f"Contract {idx+1}",
@@ -2466,13 +2522,17 @@ def create_timeline_chart_enhanced(rig_data):
                 marker=dict(size=12, color=colors[color_idx], symbol='diamond'),
                 hovertemplate=(
                     f"<b>Contract {idx+1}</b><br>" +
-                    f"<b>Start:</b> {row['Contract Start Date'].strftime('%Y-%m-%d')}<br>" +
-                    f"<b>End:</b> {row['Contract End Date'].strftime('%Y-%m-%d')}<br>" +
-                    f"<b>Dayrate:</b> ${row['Dayrate ($k)']}k<br>" +
-                    f"<b>Duration:</b> {(row['Contract End Date'] - row['Contract Start Date']).days} days" +
+                    f"<b>Start:</b> {start_str}<br>" +
+                    f"<b>End:</b> {end_str}<br>" +
+                    f"<b>Dayrate:</b> ${dayrate:.1f}k<br>" +
+                    f"<b>Duration:</b> {duration} days" +
                     "<extra></extra>"
                 )
             ))
+        
+        # If no traces were added, return None
+        if len(fig.data) == 0:
+            return None
         
         fig.update_layout(
             title={
@@ -2509,7 +2569,12 @@ def create_timeline_chart_enhanced(rig_data):
         return fig
         
     except Exception as e:
-        st.error(f"Error creating timeline: {str(e)}")
+        # Log the full error for debugging
+        import traceback
+        print(f"Timeline chart error: {str(e)}")
+        print(traceback.format_exc())
+        
+        # Return None silently to avoid breaking the UI
         return None
 
 
