@@ -2186,6 +2186,96 @@ if 'selected_rig_history' not in st.session_state:
     st.session_state.selected_rig_history = []
 
 
+# ==================== GRAPH DESCRIPTIONS ====================
+GRAPH_DESCRIPTIONS = {
+    'efficiency_gauge': {
+        'title': '🎯 Overall Efficiency Score',
+        'info': 'Shows drilling efficiency as a percentage. Combines speed, downtime, and climate factors.',
+        'how_to_read': '85-100% = Excellent | 70-85% = Good | 50-70% = Needs Improvement | <50% = Critical'
+    },
+    'climate_score': {
+        'title': '🌡️ Climate Impact Score',
+        'info': 'Evaluates how weather/climate conditions affect operations.',
+        'how_to_read': 'High score = favorable conditions | Low score = weather delays expected'
+    },
+    'time_breakdown': {
+        'title': '⏱️ Time Usage Breakdown',
+        'info': 'Distribution of time: productive drilling vs NPT vs invisible losses.',
+        'how_to_read': 'Larger "Drilling" section = better. Watch for high NPT or invisible losses.'
+    },
+    'efficiency_timeline': {
+        'title': '📈 Efficiency Over Time',
+        'info': 'Tracks efficiency trends across the contract period.',
+        'how_to_read': 'Upward trend = improving | Downward trend = investigate issues'
+    },
+    'contractor_comparison': {
+        'title': '🏆 Contractor Performance Comparison',
+        'info': 'Compares contractors on efficiency, cost, and reliability.',
+        'how_to_read': 'Use this to select the best contractor for your next project'
+    },
+    'regional_benchmark': {
+        'title': '🌍 Regional Benchmark',
+        'info': 'Compares your rig against regional averages and top performers.',
+        'how_to_read': 'Shows if you\'re above/below industry standards'
+    },
+    'monte_carlo': {
+        'title': '🎲 Monte Carlo Risk Simulation',
+        'info': 'Runs 10,000+ scenarios to predict possible outcomes.',
+        'how_to_read': 'Wider distribution = higher uncertainty'
+    },
+    'learning_curve': {
+        'title': '📚 Learning Curve',
+        'info': 'Shows team improvement over time with experience.',
+        'how_to_read': 'Steeper curve = faster learning'
+    },
+    'cost_analysis': {
+        'title': '💰 Cost Breakdown',
+        'info': 'Details all costs: day rates, NPT, climate expenses.',
+        'how_to_read': 'Identify cost drivers and savings opportunities'
+    },
+    'seasonal_pattern': {
+        'title': '📅 Seasonal Efficiency',
+        'info': 'Which months have better/worse efficiency due to weather.',
+        'how_to_read': 'Green months = plan drilling | Red months = avoid if possible'
+    },
+    'npt_analysis': {
+        'title': '⚠️ NPT Analysis',
+        'info': 'Breakdown of all delays and their causes.',
+        'how_to_read': 'Target largest NPT categories for improvement'
+    },
+    'invisible_losses': {
+        'title': '🔍 Invisible Lost Time',
+        'info': 'AI-detected subtle inefficiencies not in official logs.',
+        'how_to_read': 'These hidden losses often account for 10-20% efficiency loss'
+    },
+    'weather_impact': {
+        'title': '⛈️ Weather Impact Timeline',
+        'info': 'When weather events disrupted operations.',
+        'how_to_read': 'Use to validate climate scores and plan future avoidance'
+    },
+    'contract_utilization': {
+        'title': '📊 Contract Utilization',
+        'info': 'How well the rig was used during the contract period.',
+        'how_to_read': 'Higher % = better utilization of contracted time'
+    },
+    'dayrate_efficiency': {
+        'title': '💵 Day Rate Efficiency',
+        'info': 'Value delivered per day of contracted rate.',
+        'how_to_read': 'Higher score = better return on investment'
+    },
+    'location_complexity': {
+        'title': '🗺️ Location Complexity',
+        'info': 'Impact of geographical and logistical challenges.',
+        'how_to_read': 'Lower score = more challenging location'
+    },
+    'contract_performance': {
+        'title': '📋 Contract Performance',
+        'info': 'Overall adherence to contract terms and milestones.',
+        'how_to_read': 'Higher score = meeting or exceeding expectations'
+    }
+}
+
+
 def get_score_class(score):
     """Get CSS class based on score"""
     if score >= 85:
@@ -2208,6 +2298,114 @@ def get_score_emoji(score):
         return '⚠️'
     else:
         return '🔴'
+
+
+def display_graph_header(graph_key):
+    """Display graph title with info tooltip"""
+    if graph_key in GRAPH_DESCRIPTIONS:
+        desc = GRAPH_DESCRIPTIONS[graph_key]
+        
+        col1, col2 = st.columns([0.85, 0.15])
+        
+        with col1:
+            st.markdown(f"### {desc['title']}")
+        
+        with col2:
+            with st.expander("ℹ️ Info"):
+                st.markdown(f"**What it shows:**")
+                st.info(desc['info'])
+                st.markdown(f"**How to read:**")
+                st.success(desc['how_to_read'])
+
+
+def show_graph_guide():
+    """Display comprehensive graph guide"""
+    st.markdown("# 📚 Graph Guide - Understanding Your Analytics")
+    st.markdown("---")
+    
+    # Create tabs for different categories
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "⭐ Core Metrics", 
+        "📊 Performance Analytics", 
+        "💰 Cost Analytics", 
+        "🔮 Predictive Analytics"
+    ])
+    
+    with tab1:
+        st.markdown("## Core Efficiency Metrics")
+        for key in ['efficiency_gauge', 'climate_score', 'time_breakdown', 'contract_utilization', 'dayrate_efficiency']:
+            if key in GRAPH_DESCRIPTIONS:
+                desc = GRAPH_DESCRIPTIONS[key]
+                with st.expander(f"{desc['title']}"):
+                    st.markdown(f"**📖 Description:**")
+                    st.write(desc['info'])
+                    st.markdown(f"**📊 How to Read:**")
+                    st.write(desc['how_to_read'])
+                    st.markdown("---")
+    
+    with tab2:
+        st.markdown("## Performance Analytics")
+        for key in ['efficiency_timeline', 'contractor_comparison', 'regional_benchmark', 'learning_curve', 
+                    'location_complexity', 'contract_performance']:
+            if key in GRAPH_DESCRIPTIONS:
+                desc = GRAPH_DESCRIPTIONS[key]
+                with st.expander(f"{desc['title']}"):
+                    st.markdown(f"**📖 Description:**")
+                    st.write(desc['info'])
+                    st.markdown(f"**📊 How to Read:**")
+                    st.write(desc['how_to_read'])
+    
+    with tab3:
+        st.markdown("## Cost & NPT Analytics")
+        for key in ['cost_analysis', 'npt_analysis', 'invisible_losses']:
+            if key in GRAPH_DESCRIPTIONS:
+                desc = GRAPH_DESCRIPTIONS[key]
+                with st.expander(f"{desc['title']}"):
+                    st.markdown(f"**📖 Description:**")
+                    st.write(desc['info'])
+                    st.markdown(f"**📊 How to Read:**")
+                    st.write(desc['how_to_read'])
+    
+    with tab4:
+        st.markdown("## Predictive & Risk Analytics")
+        for key in ['monte_carlo', 'seasonal_pattern', 'weather_impact']:
+            if key in GRAPH_DESCRIPTIONS:
+                desc = GRAPH_DESCRIPTIONS[key]
+                with st.expander(f"{desc['title']}"):
+                    st.markdown(f"**📖 Description:**")
+                    st.write(desc['info'])
+                    st.markdown(f"**📊 How to Read:**")
+                    st.write(desc['how_to_read'])
+
+
+def show_quick_start():
+    """Display quick start guide"""
+    st.markdown("## 🚀 Quick Start Guide")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        ### 📊 Understanding Graphs
+        
+        1. **Look for the ℹ️ icon** next to each graph
+        2. **Check color coding**: Green=Good, Red=Bad
+        3. **Hover over charts** for detailed data points
+        4. **Click legends** to show/hide data series
+        """)
+    
+    with col2:
+        st.markdown("""
+        ### 🎯 Key Metrics to Watch
+        
+        1. **Efficiency Score** (Target: >85%)
+        2. **NPT %** (Target: <5%)
+        3. **Climate Score** (Target: >7/10)
+        4. **Cost per Foot** (Compare to benchmark)
+        """)
+    
+    st.markdown("---")
+    st.info("💡 **Pro Tip:** Visit the **📚 Graph Guide** tab for detailed explanations of every visualization!")
 
 
 def hex_to_rgba(hex_color, alpha=0.1):
@@ -3226,12 +3424,15 @@ def main():
                     with st.expander("📊 Data Preview", expanded=False):
                         col1, col2, col3 = st.columns(3)
                         with col1:
-                            st.metric("Total Records", f"{len(df):,}")
+                            st.metric("Total Records", f"{len(df):,}", 
+                                     help="Total number of data rows in uploaded file")
                         with col2:
-                            st.metric("Unique Rigs", f"{df['Rig Name'].nunique():,}")
+                            st.metric("Unique Rigs", f"{df['Rig Name'].nunique():,}",
+                                     help="Number of distinct rigs in your dataset")
                         with col3:
                             if 'Current Location' in df.columns:
-                                st.metric("Locations", f"{df['Current Location'].nunique():,}")
+                                st.metric("Locations", f"{df['Current Location'].nunique():,}",
+                                         help="Number of different operational locations")
                         
                         st.dataframe(
                             df.head(10).style.set_properties(**{
@@ -3326,6 +3527,36 @@ def main():
                     f"{active:,}",
                     help="Currently active contracts"
                 )
+        
+        # ==================== GRAPH LEGEND & HELP ====================
+        st.markdown("---")
+        st.markdown("### 📊 Quick Legend")
+        
+        with st.expander("🎨 Color Coding"):
+            st.markdown("""
+            - 🟢 **Green**: Excellent performance (>85%)
+            - 🟡 **Yellow**: Good performance (70-85%)
+            - 🟠 **Orange**: Needs attention (50-70%)
+            - 🔴 **Red**: Critical issues (<50%)
+            """)
+        
+        with st.expander("📈 Chart Types"):
+            st.markdown("""
+            - **Gauge Charts**: Single score (0-100%)
+            - **Line Charts**: Trends over time
+            - **Bar Charts**: Comparisons between groups
+            - **Pie Charts**: Percentage breakdowns
+            - **Heatmaps**: Risk levels by category
+            - **Scatter Plots**: Correlations
+            """)
+        
+        with st.expander("ℹ️ Need Help?"):
+            st.markdown("""
+            Click the **ℹ️ Info** button next to any graph title 
+            for detailed explanations.
+            
+            Or visit the **📚 Graph Guide** tab for comprehensive help.
+            """)
     
     # ==================== AI CHATBOT DISPLAY ====================
     # Display chatbot in sidebar expander for easy access
@@ -3528,7 +3759,7 @@ def main():
         st.success(f"✅ Analysis complete for **{selected_rig}** | Overall Score: **{metrics['overall_efficiency']:.1f}%** {get_score_emoji(metrics['overall_efficiency'])}")
         
         # Create enhanced tabs
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12, tab13 = st.tabs([
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12, tab13, tab14, tab15 = st.tabs([
             "🎯 OVERVIEW",
             "📊 DETAILED METRICS",
             "🌤️ CLIMATE AI",
@@ -3541,7 +3772,9 @@ def main():
             "📈 CONTRACTOR ANALYSIS",
             "📉 LEARNING CURVES",
             "⚡ LOST TIME DETECTOR",
-            "🔍 RIG AVAILABILITY"
+            "🔍 RIG AVAILABILITY",
+            "📚 GRAPH GUIDE",
+            "🚀 QUICK START"
         ])
         
         # TAB 1: Enhanced Overview
@@ -3608,15 +3841,17 @@ def main():
             col1, col2 = st.columns([1, 1])
             
             with col1:
-                st.markdown("#### 🎯 OVERALL PERFORMANCE")
+                display_graph_header('efficiency_gauge')
                 fig_gauge = create_enhanced_gauge_chart(
                     metrics['overall_efficiency'],
                     "Overall Efficiency"
                 )
                 st.plotly_chart(fig_gauge, use_container_width=True)
+                st.caption("💡 Tip: Higher efficiency means faster drilling with fewer delays")
             
             with col2:
                 st.markdown("#### 📊 EFFICIENCY BREAKDOWN")
+                st.caption("Detailed view of performance factors")
                 metric_comparison = {
                     'Utilization': metrics['contract_utilization'],
                     'Dayrate': metrics['dayrate_efficiency'],
@@ -3659,6 +3894,7 @@ def main():
             col1, col2, col3 = st.columns(3)
             
             with col1:
+                display_graph_header('contract_utilization')
                 fig1 = create_enhanced_gauge_chart(
                     metrics['contract_utilization'],
                     "Contract Utilization"
@@ -3678,6 +3914,7 @@ def main():
                     """)
             
             with col2:
+                display_graph_header('dayrate_efficiency')
                 fig2 = create_enhanced_gauge_chart(
                     metrics['dayrate_efficiency'],
                     "Dayrate Efficiency"
@@ -3697,6 +3934,7 @@ def main():
                     """)
             
             with col3:
+                display_graph_header('contract_performance')
                 fig3 = create_enhanced_gauge_chart(
                     metrics['contract_stability'],
                     "Contract Stability"
@@ -4194,7 +4432,8 @@ def main():
                         col1, col2, col3, col4 = st.columns(4)
                         
                         with col1:
-                            st.metric("Fleet Average", f"{comparison_df['Overall Score'].mean():.1f}%")
+                            st.metric("Fleet Average", f"{comparison_df['Overall Score'].mean():.1f}%", 
+                                     help="Mean efficiency score across all rigs in your fleet")
                         with col2:
                             # Safely get top rig name
                             try:
@@ -4202,12 +4441,15 @@ def main():
                                 display_name = best_name if len(str(best_name)) <= 15 else str(best_name)[:15] + '…'
                             except Exception:
                                 display_name = "N/A"
-                            st.metric("Best Performer", display_name)
+                            st.metric("Best Performer", display_name,
+                                     help="Rig with the highest overall efficiency score")
                         with col3:
-                            st.metric("Highest Score", f"{comparison_df['Overall Score'].max():.1f}%")
+                            st.metric("Highest Score", f"{comparison_df['Overall Score'].max():.1f}%",
+                                     help="Maximum efficiency achieved in your fleet")
                         with col4:
                             score_range = comparison_df['Overall Score'].max() - comparison_df['Overall Score'].min()
-                            st.metric("Score Range", f"{score_range:.1f}%")
+                            st.metric("Score Range", f"{score_range:.1f}%",
+                                     help="Difference between best and worst performing rigs")
                         
                         st.markdown("---")
                         
@@ -5542,6 +5784,18 @@ def main():
                 except Exception as e:
                     st.error(f"❌ Error during search: {str(e)}")
                     st.info("Please check your data and try again.")
+        
+        # ============================================================================
+        # TAB 14: GRAPH GUIDE
+        # ============================================================================
+        with tab14:
+            show_graph_guide()
+        
+        # ============================================================================
+        # TAB 15: QUICK START
+        # ============================================================================
+        with tab15:
+            show_quick_start()
     
 
 
