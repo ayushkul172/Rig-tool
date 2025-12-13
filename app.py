@@ -2272,6 +2272,36 @@ GRAPH_DESCRIPTIONS = {
         'title': '📋 Contract Performance',
         'info': 'Overall adherence to contract terms and milestones.',
         'how_to_read': 'Higher score = meeting or exceeding expectations'
+    },
+    'rig_fleet_comparison': {
+        'title': '🏆 Fleet-Wide Comparison',
+        'info': 'Side-by-side performance comparison of multiple rigs.',
+        'how_to_read': 'Higher bars = better performance. Use to identify top/bottom performers.'
+    },
+    'monte_carlo_distribution': {
+        'title': '🎲 Risk Distribution',
+        'info': 'Statistical spread of possible outcomes from 1000+ simulations.',
+        'how_to_read': 'Wider spread = higher uncertainty. Bell curve = predictable outcomes.'
+    },
+    'contractor_consistency': {
+        'title': '📈 Contractor Reliability',
+        'info': 'Measures consistency across multiple performance metrics.',
+        'how_to_read': 'Higher consistency = more reliable contractor performance.'
+    },
+    'ilt_breakdown': {
+        'title': '⚡ Hidden Inefficiency Sources',
+        'info': 'Categories of invisible lost time not captured in standard logs.',
+        'how_to_read': 'Larger segments = focus areas for operational improvement.'
+    },
+    'basin_transfer_sim': {
+        'title': '🌍 Basin Transfer Analysis',
+        'info': 'Predicted performance if rig moves to different operational basin.',
+        'how_to_read': 'P10/P50/P90 values show risk range (best/likely/worst case).'
+    },
+    'rig_radar_profile': {
+        'title': '🔷 Multi-Dimensional Profile',
+        'info': 'Spider chart showing performance across 6 key dimensions.',
+        'how_to_read': 'Larger area = better overall performance. Gaps show improvement areas.'
     }
 }
 
@@ -2478,7 +2508,18 @@ def create_enhanced_gauge_chart(value, title, max_value=100):
         plot_bgcolor='rgba(0,0,0,0)',
         font={'color': "#E0F2FF", 'family': "Rajdhani"},
         height=340,  # Slightly increased
-        margin=dict(l=20, r=20, t=90, b=20)
+        margin=dict(l=20, r=20, t=90, b=20),
+        annotations=[
+            dict(
+                text="ℹ️ Hover for details",
+                xref="paper", yref="paper",
+                x=0.98, y=0.02,
+                showarrow=False,
+                font=dict(size=10, color="#4FC3F7"),
+                xanchor="right",
+                yanchor="bottom"
+            )
+        ]
     )
     
     return fig
@@ -3866,9 +3907,10 @@ def main():
             st.markdown("---")
             
             # Radar chart
-            st.markdown("#### 🔷 EFFICIENCY PROFILE")
+            display_graph_header('rig_radar_profile')
             fig_radar = create_enhanced_radar_chart(metrics, selected_rig)
             st.plotly_chart(fig_radar, use_container_width=True)
+            st.caption("💡 Larger area = better overall performance. Gaps show improvement opportunities.")
             
             # Timeline
             st.markdown("---")
@@ -4182,7 +4224,7 @@ def main():
             
             # Climate visualization
             st.markdown("---")
-            st.markdown("### 📊 CLIMATE IMPACT VISUALIZATION")
+            display_graph_header('climate_score')
             
             if 'Current Location' in rig_data.columns:
                 locations = rig_data['Current Location'].dropna().unique()
@@ -4260,6 +4302,7 @@ def main():
                     )
                     
                     st.plotly_chart(fig, use_container_width=True)
+                    st.caption("💡 Green zones indicate favorable drilling conditions. Red zones require weather mitigation strategies.")
         
         # TAB 4: Enhanced Insights
         with tab4:
@@ -4521,9 +4564,10 @@ def main():
                         
                         # Heatmap
                         st.markdown("---")
-                        st.markdown("### 🔥 PERFORMANCE HEATMAP")
+                        display_graph_header('rig_fleet_comparison')
                         fig_heatmap = create_performance_heatmap(comparison_df)
                         st.plotly_chart(fig_heatmap, use_container_width=True)
+                        st.caption("💡 Darker colors = better scores. Compare columns to find fleet strengths/weaknesses.")
                         
                         # Multi-radar
                         st.markdown("---")
@@ -5100,7 +5144,7 @@ def main():
                     )
                     
                     st.markdown("---")
-                    st.markdown("### 📈 DISTRIBUTION ANALYSIS")
+                    display_graph_header('monte_carlo_distribution')
                     
                     col1, col2 = st.columns(2)
                     
@@ -5229,7 +5273,7 @@ def main():
                 st.markdown("---")
                 
                 # Consistency breakdown
-                st.markdown("### 📊 CONSISTENCY BREAKDOWN")
+                display_graph_header('contractor_consistency')
                 
                 consistency_data = {
                     'ROP Consistency': analysis.get('rop_consistency', 0),
@@ -5336,6 +5380,7 @@ def main():
                 st.markdown("---")
                 
                 # Learning curve visualization
+                display_graph_header('learning_curve')
                 actual_times = curve_analysis.get('actual_times', [])
                 predicted_times = curve_analysis.get('predicted_times', [])
                 
@@ -5379,6 +5424,7 @@ def main():
                     )
                     
                     st.plotly_chart(fig_learning, use_container_width=True)
+                    st.caption("💡 Steeper downward curve = faster learning. Flat line = performance plateau.")
                 
                 st.markdown("---")
                 
